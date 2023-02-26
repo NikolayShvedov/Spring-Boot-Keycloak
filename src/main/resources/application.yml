@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+keycloak:
+  auth-server-url: https://<keycloak host>/auth
+  realm:
+  resource:
+  credentials:
+    secret:
+
+api:
+  keycloak:
+    authorization-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/token
+    user-info-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/userinfo

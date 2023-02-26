@@ -1,0 +1,54 @@
+# docker compose --env-file .env.keycloak up --build --detach
+# docker compose logs -f
+# docker compose down
+
+version: "3.9"
+
+services:
+
+  kc_postgres:
+    image: postgres:14.5
+    container_name: postgres-keycloak
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${POSTGRES_KEYCLOAK_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_KEYCLOAK_DATABASE}
+    healthcheck:
+      test: pg_isready -d postgres
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    ports:
+      - 5435:5432
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:20.0.2
+    container_name: keycloak
+    command:
+      - start --auto-build --db ${POSTGRES_KEYCLOAK_DATABASE} --hostname-strict-https false --hostname-strict false --proxy edge --http-enabled true --import-realm --spi-user-profile-legacy-user-profile-read-only-attributes *_RES_ACCESS_MODE
+    environment:
+      KC_DB_URL: jdbc:postgresql://kc_postgres:5432/${POSTGRES_KEYCLOAK_DATABASE}
+      KC_DB_USERNAME: ${POSTGRES_KEYCLOAK_USER}
+      KC_DB_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+      KC_DB_SCHEMA: public
+      KC_FEATURES: preview
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+#    volumes:
+#      - type: bind
+#        source: ${REALM_KEYCLOAK_SOURCE_PATH}
+#        target: ${REALM_KEYCLOAK_TARGET_PATH}
+#        read_only: true
+    ports:
+      - 8282:8080
+    depends_on:
+      kc_postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://0.0.0.0:8080/realms/master" ]
+      start_period: 10s
+      interval: 30s
+      retries: 3
+      timeout: 5s
