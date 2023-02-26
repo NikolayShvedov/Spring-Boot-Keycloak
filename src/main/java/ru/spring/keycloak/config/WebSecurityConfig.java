@@ -33,13 +33,13 @@ public class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
         super.configure(http);
         http
                 .authorizeRequests()
-                .antMatchers("/api/authenticate", "/api/refresh").permitAll()
+                .antMatchers("/api/authenticate", "/api/refresh", "/api/user/info").permitAll()
                 .anyRequest().fullyAuthenticated();
     }
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/api/authenticate", "/api/refresh");
+        web.ignoring().antMatchers("/api/authenticate", "/api/refresh", "/api/user/info");
     }
 
 
